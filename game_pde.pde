@@ -101,6 +101,7 @@ float canv_h = 1000;
 float drum_w = 400;
 float drum_h = 100;
 float note_speed = 17;
+float max_speed = 25;
 
 // Note Positions
 float OVER_DRUM_0 = 110;
@@ -151,6 +152,11 @@ void draw_lives() {
 void update_score(){
 	score += 100;
 	draw_score();
+}
+
+void update_speed(){
+	if(((score % 1000) == 0) && (note_speed < max_speed))
+		note_speed++;
 }
 
 void reduce_life(){
@@ -206,7 +212,8 @@ void drum_note_stick_collision(ArrayList drums_hit) {
 			if (drum_note_collision(d,notes[j])) {
 				if(notes[j].played == false){
 					update_score();
-					notes[j].played = true;	
+					notes[j].played = true;
+					update_speed();	
 				}				
 			}
  		}
