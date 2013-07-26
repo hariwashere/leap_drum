@@ -1,10 +1,107 @@
+var scene, camera, renderer, controller;
+
+var pointsInScreen = [];
+var MAX_PTS = 2;
+
+function setupRenderer(){
+	renderer = new THREE.WebGLRenderer({antialias: true});
+	renderer.setSize(
+		document.body.clientWidth,
+		document.body.clientHeight
+	);
+	document.body.appendChild(renderer.domElement);
+	renderer.clear();
+
+	camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.10, 1000);
+	camera.position.z = 500;
+	camera.position.y = 100;
+	camera.lookAt(new THREE.Vector3(0,300,0));
+
+	scene = new THREE.Scene();
+    
+    /*
+    // Basic Test
+    var cube = new THREE.Mesh(
+    	new THREE.CubeGeometry(50,50,50),
+   		new THREE.MeshBasicMaterial({color: 0x000000})
+   	);
+   	scene.add(cube);
+	*/
+	
+    renderer.render(scene, camera);
+}
+
+function processFrame(frame){
+	var pointsInFrame = [];
+	// Only process if we have identified hands.
+	for (var index = 0; index < frame.hands.length; index++){
+		var hand = frame.hands[index];
+		var pos = hand.sphereCenter;
+		var dir = hand.direction;
+
+		/*
+		var origin = new THREE.Vector3(pos[0], pos[1] - 30, pos[2]);
+		var direction = new THREE.Vector3(dir[0], dir[1], dir[2]);
+
+		var arrowObj = new THREE.ArrowHelper(origin, direction, 40, 0xf0f0f0);
+        arrowObj.position = origin;
+		arrowObj.setDirection(direction);
+
+		pointsInFrame.push(arrowObj);
+		*/
+		pointsInFrame.push(pos);
+	}
+
+	return pointsInFrame;
+}
+
+function processResponse(frame){
+	var pointsInFrame = processFrame(frame);
+
+	for (var index = 0; index < pointsInFrame.length; index++){
+
+
+		if(pointsInScreen.length > MAX_PTS){
+			var pointToRemove = pointsInScreen.shift();
+			//scene.remove(pointToRemove);
+		}
+
+		var pointToAdd = pointsInFrame[index];
+		pointsInScreen.push(pointToAdd);
+		//scene.add(pointToAdd);
+		//console.log("Adding point to scene.");
+		handMoved(pointToAdd[0], pointToAdd[1]);
+		console.log("Got x:" + pointToAdd[0] + "y:" + pointToAdd[1] + "z:" + pointToAdd[2]);
+	}
+
+	//renderer.render(scene, camera);
+}
+
+function startListening(){
+	//controller = new Leap.Controller();
+	controller = new Leap.Controller({frameEventName: "deviceFrame"});
+
+	controller.on(
+		'deviceFrame',
+		processResponse
+	);
+
+	controller.connect();
+}
+
+//$.ready(function(){
+	//setupRenderer();
+	startListening();
+//});
+
+
 float canv_w = 1900;
 float canv_h = 1000;
 int game_score = 0; 
 
 float drum_w = 400;
 float drum_h = 100;
-float note_speed = 25;
+float note_speed = 17;
 
 // Note Positions
 float OVER_DRUM_0 = 110;
@@ -16,8 +113,8 @@ void setup() {
 	size(canv_w,canv_h);
 
 	notes[0] = new Note(OVER_DRUM_1,0,300,70,255,255,255);
-	//notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255);
-	for (int i = 1; i<notes.length; i++) {
+	notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255);
+	for (int i = 2; i<notes.length; i++) {
 		notes[i] = new Note();
 	}	
 }
@@ -33,7 +130,8 @@ Drum[] drums = {d0,d1,d2,d3};
 Note[] notes = new Note[15];
 
 // Set up Drumsticks
-DrumStick ds1 = new DrumStick(0,0);
+DrumStick ds2 = new DrumStick(0,0,100);
+Drumstick ds1 = new DrumStick(1900,0,255);
 
 void draw() {
 	background(0);
@@ -56,6 +154,7 @@ void draw() {
 
 	// Draw Drumsticks
 	ds1.draw();
+	ds2.draw();
 
 	// Check with Drums are Stuck
 	ArrayList drums_hit = determine_drums_hit();
@@ -100,11 +199,21 @@ boolean drum_note_collision(Drum d, Note n) {
 ArrayList determine_drums_hit() {
 	ArrayList drums_hit = new ArrayList();
 	for (int i = 0; i<drums.length; i++) {
-		if (ds1.x-ds1.rad > drums[i].x+drums[i].width) {continue;}
-		if (ds1.x+ds1.rad < drums[i].x) {continue;}
-		if (ds1.y+ds1.rad < drums[i].y) {continue;}
-		if (ds1.y-ds1.rad > drums[i].y+drums[i].height) {continue;}
-		drums_hit.add(i);
+		boolean hit_by_ds1 = true;
+		if (ds1.x-ds1.rad > drums[i].x+drums[i].width) {hit_by_ds1 = false;}
+		if (ds1.x+ds1.rad < drums[i].x) {hit_by_ds1 = false;}
+		if (ds1.y+ds1.rad < drums[i].y) {hit_by_ds1 = false;}
+		if (ds1.y-ds1.rad > drums[i].y+drums[i].height) {hit_by_ds1 = false;}
+
+		boolean hit_by_ds2 = true;
+		if (ds2.x-ds2.rad > drums[i].x+drums[i].width) {hit_by_ds2 = false;}
+		if (ds2.x+ds2.rad < drums[i].x) {hit_by_ds2 = false;}
+		if (ds2.y+ds2.rad < drums[i].y) {hit_by_ds2 = false;}
+		if (ds2.y-ds2.rad > drums[i].y+drums[i].height) {hit_by_ds2 = false;}
+
+		if (hit_by_ds1 || hit_by_ds2) {
+			drums_hit.add(i);
+		}
 	}
 
 	return drums_hit;	
@@ -116,9 +225,35 @@ void highlight_drums(ArrayList drums_hit) {
 	}	
 }
 
-void mouseMoved() {
-	ds1.x = mouseX;
-	ds1.y = mouseY;
+void moveDrumStick(float x, float y, Drumstick ds) {
+	maxX = 250;
+	if(x > maxX){
+		ds.x = 1900;
+	}
+	else{
+		ds.x = (x+maxX)*1900/(2*maxX);
+	}
+	//ds1.y = 1000-y;
+	ds.y = 900;
+}
+
+void handMovedRight(float x, float y){
+	moveDrumStick(x, y, ds1);
+}
+
+void handMovedLeft(float x, float y){
+	moveDrumStick(x, y, ds2);
+}
+
+function handMoved(x,y) {
+	maxX = 250;
+	if(x > 0){
+		handMovedRight(x, y);
+	}
+	else{
+		handMovedLeft(x, y);
+	}
+	//ds1.y = 1000-y;
 }
 
 class Note {
@@ -181,7 +316,7 @@ class Note {
 class Drum {
 	float x,y,width,height;
 	float red,green,blue;
-	boolean highlight = false;
+	boolean highlight = false;	
 
 	Drum(float xp, float yp, float w, float h, float r, float g, float b) {
 		x = xp;
@@ -210,11 +345,11 @@ class DrumStick {
 	float x,y,rad;
 	float red,green,blue;
 
-	DrumStick(float xp, float yp) {
+	DrumStick(float xp, float yp, float r) {
 		x = xp;
 		y = yp;
 		rad = 50;
-		red = 204;
+		red = r;
 		green = 102;
 		blue = 0;
 	}
