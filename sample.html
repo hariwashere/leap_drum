@@ -7,6 +7,9 @@
 			int numBalls = 4;
 			float spring = 0.05;
 			float gravity = 0.01;
+			float min_distance = 40.0;
+			float velocity = 4.0;
+			float distance_moved_since_last_creation = 0.0;
 			Ball[] balls = new Ball[numBalls];
 
 			void setup() 
@@ -14,9 +17,10 @@
 				size(1900, 800);
 				noStroke();
 				smooth();
-				for (int i = 0; i < numBalls; i++) {
-					balls[i] = new Ball(random(width), random(height), 30, i, balls);
-				}
+				balls[0] = new Ball(260, 90, 30, 0);
+				balls[1] = new Ball(720, 90, 30, 1);
+				balls[2] = new Ball(1180, 90, 30, 2);
+				balls[3] = new Ball(1640, 90, 30, 3);
 			}
 
 			void draw() 
@@ -24,9 +28,21 @@
 				background(0);
 				for (int i = 0; i < numBalls; i++) {
 					balls[i].move();
-					balls[i].display();  
+					balls[i].display();
+					void create_balls();  
 				}
+				distance_moved_since_last_creation += 1.0;
 			}
+
+			void create_balls(){
+				if(distance_moved_since_last_creation > min_distance){
+					int i = int(random(3));
+					balls[numBalls] = new Ball((460 * i) + 260, 90, 30, numBalls);
+					distance_moved_since_last_creation = 0.0;
+					numBalls++;
+				}	
+			}
+		
 
 			class Ball {
 				float x, y;
@@ -34,20 +50,16 @@
 				float vx = 0;
 				float vy = 0;
 				int id;
-				Ball[] others;
 
-				Ball(float xin, float yin, float din, int idin, Ball[] oin) {
+				Ball(float xin, float yin, float din, int idin) {
 					x = xin;
 					y = yin;
 					diameter = din;
 					id = idin;
-					others = oin;
 				} 
 			
-				void move() {
-					vy += gravity;
-					
-					y += 0.9;
+				void move() {					
+					y += velocity;
 				}
 
 				void display() {
