@@ -1,6 +1,5 @@
 float canv_w = 1900;
 float canv_h = 1000;
-int game_score = 0; 
 
 float drum_w = 400;
 float drum_h = 100;
@@ -54,6 +53,8 @@ void update_score(){
 
 void reduce_life(){
 	lives -= 1;
+	if (lives < 0)
+		alert("Game Over!!");
 	draw_lives();
 }
 
@@ -62,11 +63,6 @@ void draw() {
 	draw_score();
 	draw_lives();
 	
-	// Show Text
-	fill(255,0,0);
-	textSize(55);
-	text("Score: " + game_score,60,60);
-
 	// Draw the Drums
 	for (int i = 0; i<drums.length; i++) {
 		drums[i].draw();
@@ -92,10 +88,6 @@ void draw() {
 
 }
 
-void update_score() {
-	// Just to test my collision logic
-	game_score += 10;
-}
 
 void drum_note_stick_collision(ArrayList drums_hit) {
 	for (int i = 0; i<drums_hit.size(); i++) {
@@ -108,6 +100,7 @@ void drum_note_stick_collision(ArrayList drums_hit) {
 
 			if (drum_note_collision(d,notes[j])) {
 				update_score();
+				notes[j].played = true;
 			}
  		}
 	}
@@ -187,6 +180,7 @@ class Note {
 		}
 		if(!played)
 			reduce_life();
+		played = false;
 	}
 
 	void update() {
