@@ -107,14 +107,18 @@ float OVER_DRUM_0 = 110;
 float OVER_DRUM_1 = 570;
 float OVER_DRUM_2 = 1030;
 float OVER_DRUM_3 = 1490;
+float[] LEFT_DRUMS = [OVER_DRUM_0, OVER_DRUM_1];
+float[] RIGHT_DRUMS = [OVER_DRUM_2, OVER_DRUM_3];
+
 int score = 0;
-int lives = 5;
+int max_lives = 500;
+int lives = max_lives;
 
 void setup() {
 	size(canv_w,canv_h);
 
-	notes[0] = new Note(OVER_DRUM_1,0,300,70,255,255,255);
-	notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255);
+	notes[0] = new Note(OVER_DRUM_1,0,300,70,255,255,255, true);
+	notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255, false);
 	for (int i = 2; i<notes.length; i++) {
 		notes[i] = new Note();
 	}	
@@ -151,8 +155,10 @@ void update_score(){
 
 void reduce_life(){
 	lives -= 1;
-	if (lives < 0)
+	if (lives < 0) {
 		alert("Game Over!!");
+		lives = max_life;
+	}		
 	draw_lives();
 }
 
@@ -198,8 +204,10 @@ void drum_note_stick_collision(ArrayList drums_hit) {
 			}
 
 			if (drum_note_collision(d,notes[j])) {
-				update_score();
-				notes[j].played = true;
+				if(notes[j].played == false){
+					update_score();
+					notes[j].played = true;	
+				}				
 			}
  		}
 	}
@@ -278,8 +286,9 @@ class Note {
 	float red,green,blue;
 	boolean exists = true;
 	boolean played = false;
+	boolean is_left = true;
 
-	Note(float xp,float yp,float w,float h,float r,float g,float b) {
+	Note(float xp,float yp,float w,float h,float r,float g,float b, boolean parity) {
 		x = xp;
 		y = yp;
 		width = w;
@@ -288,6 +297,7 @@ class Note {
 		green = g;
 		blue = b;
 		exists = true;
+		is_left = parity;
 	}
 
 	Note() {
@@ -296,23 +306,21 @@ class Note {
 
 	void reset() {		
 		float seed = random(0,1);
+		float[] over_drum;
+		if(is_left)
+			over_drum = LEFT_DRUMS;
+		else
+			over_drum = RIGHT_DRUMS;
 
-		if (seed < 0.25) {
-			x = OVER_DRUM_0;
-			y = 0;
-		}
-		else if (seed < 0.50) {
-			x = OVER_DRUM_1;
-			y = 0;
-		}
-		else if (seed < 0.75) {
-			x = OVER_DRUM_2;
+		if (seed < 0.5) {
+			x = over_drum[0];
 			y = 0;
 		}
 		else {
-			x = OVER_DRUM_3;
+			x = over_drum[1];
 			y = 0;
 		}
+
 		if(!played)
 			reduce_life();
 		played = false;
