@@ -98,18 +98,20 @@ function startListening(){
 float canv_w = 1900;
 float canv_h = 1000;
 
-float drum_w = 400;
+float drum_w = 250;
 float drum_h = 100;
 float note_speed = 17;
 float max_speed = 25;
 
 // Note Positions
-float OVER_DRUM_0 = 110;
-float OVER_DRUM_1 = 570;
-float OVER_DRUM_2 = 1030;
-float OVER_DRUM_3 = 1490;
-float[] LEFT_DRUMS = [OVER_DRUM_0, OVER_DRUM_1];
-float[] RIGHT_DRUMS = [OVER_DRUM_2, OVER_DRUM_3];
+float OVER_DRUM_0 = 75;
+float OVER_DRUM_1 = 375;
+float OVER_DRUM_2 = 675;
+float OVER_DRUM_3 = 1025;
+float OVER_DRUM_4 = 1325;
+float OVER_DRUM_5 = 1625;
+float[] LEFT_DRUMS = [OVER_DRUM_0, OVER_DRUM_1, OVER_DRUM_2];
+float[] RIGHT_DRUMS = [OVER_DRUM_3, OVER_DRUM_4, OVER_DRUM_5];
 
 int score = 0;
 int max_lives = 500;
@@ -118,19 +120,21 @@ int lives = max_lives;
 void setup() {
 	size(canv_w,canv_h);
 
-	notes[0] = new Note(OVER_DRUM_1,0,300,70,255,255,255, true);
-	notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255, false);
+	notes[0] = new Note(OVER_DRUM_3,0,200,70,255,255,255, true);
+	notes[1] = new Note(OVER_DRUM_0,0,200,70,255,255,255, false);
 	for (int i = 2; i<notes.length; i++) {
 		notes[i] = new Note();
 	}	
 }
 
 // Set up Drums
-Drum d0 = new Drum(60,850,drum_w,drum_h,255,0,0);
-Drum d1 = new Drum(520,850,drum_w,drum_h,0,255,0);
-Drum d2 = new Drum(980,850,drum_w,drum_h,0,0,255);
-Drum d3 = new Drum(1440,850,drum_w,drum_h,255,255,0);
-Drum[] drums = {d0,d1,d2,d3};
+Drum d0 = new Drum(50,850,drum_w,drum_h,255,0,0);
+Drum d1 = new Drum(350,850,drum_w,drum_h,0,255,0);
+Drum d2 = new Drum(650,850,drum_w,drum_h,0,0,255);
+Drum d3 = new Drum(1000,850,drum_w,drum_h,255,0,0);
+Drum d4 = new Drum(1300,850,drum_w,drum_h,0,255,0);
+Drum d5 = new Drum(1600,850,drum_w,drum_h,0,0,255);
+Drum[] drums = {d0,d1,d2,d3, d4, d5};
 
 // Set up Notes
 Note[] notes = new Note[15];
@@ -319,14 +323,19 @@ class Note {
 		else
 			over_drum = RIGHT_DRUMS;
 
-		if (seed < 0.5) {
+		if (seed < 0.33) {
 			x = over_drum[0];
 			y = 0;
 		}
-		else {
+		else if (seed < 0.67) {
 			x = over_drum[1];
 			y = 0;
 		}
+		else {
+			x = over_drum[2];
+			y = 0;
+		}
+			
 
 		if(!played)
 			reduce_life();
