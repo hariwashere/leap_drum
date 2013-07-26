@@ -114,7 +114,7 @@ float[] LEFT_DRUMS = [OVER_DRUM_0, OVER_DRUM_1, OVER_DRUM_2];
 float[] RIGHT_DRUMS = [OVER_DRUM_3, OVER_DRUM_4, OVER_DRUM_5];
 
 int score = 0;
-int max_lives = 500;
+int max_lives = 5;
 int lives = max_lives;
 
 void setup() {
@@ -167,7 +167,8 @@ void reduce_life(){
 	lives -= 1;
 	if (lives < 0) {
 		alert("Game Over!!");
-		lives = max_life;
+		lives = max_lives;
+		score = 0;
 	}		
 	draw_lives();
 }
