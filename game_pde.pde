@@ -1,5 +1,6 @@
 float canv_w = 1900;
 float canv_h = 1000;
+int game_score = 0; 
 
 float drum_w = 400;
 float drum_h = 100;
@@ -15,8 +16,8 @@ void setup() {
 	size(canv_w,canv_h);
 
 	notes[0] = new Note(OVER_DRUM_1,0,300,70,255,255,255);
-	notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255);
-	for (int i = 2; i<notes.length; i++) {
+	//notes[1] = new Note(OVER_DRUM_0,0,300,70,255,255,255);
+	for (int i = 1; i<notes.length; i++) {
 		notes[i] = new Note();
 	}	
 }
@@ -37,6 +38,11 @@ DrumStick ds1 = new DrumStick(0,0);
 void draw() {
 	background(0);
 	
+	// Show Text
+	fill(255,0,0);
+	textSize(55);
+	text("Score: " + game_score,60,60);
+
 	// Draw the Drums
 	for (int i = 0; i<drums.length; i++) {
 		drums[i].draw();
@@ -57,21 +63,54 @@ void draw() {
 	// Highlight Them
 	highlight_drums(drums_hit);
 
+	// Drum + Note + Drumstick Collisions
+	void drum_note_stick_collision(drums_hit);
+
+}
+
+void update_score() {
+	// Just to test my collision logic
+	game_score += 10;
+}
+
+void drum_note_stick_collision(ArrayList drums_hit) {
+	for (int i = 0; i<drums_hit.size(); i++) {
+		Drum d = drums[drums_hit.get(i)];		
+
+		for (int j = 0; j<notes.length; j++) {
+			if (!notes[j].exists) {				
+				continue;
+			}
+
+			if (drum_note_collision(d,notes[j])) {
+				update_score();
+			}
+ 		}
+	}
+}
+
+boolean drum_note_collision(Drum d, Note n) {
+	if (d.x > n.x+n.width) {return false;}
+	if (d.x+d.width < n.x) {return false;}
+	if (d.y > n.y+n.height) {return false;}
+	if (d.y+d.height < n.y) {return false;}
+	return true;
 }
 
 ArrayList determine_drums_hit() {
 	ArrayList drums_hit = new ArrayList();
 	for (int i = 0; i<drums.length; i++) {
 		if (ds1.x-ds1.rad > drums[i].x+drums[i].width) {continue;}
-		if (ds1.x+ds1.rad < drums[i].x-drums[i].width) {continue;}
+		if (ds1.x+ds1.rad < drums[i].x) {continue;}
 		if (ds1.y+ds1.rad < drums[i].y) {continue;}
 		if (ds1.y-ds1.rad > drums[i].y+drums[i].height) {continue;}
 		drums_hit.add(i);
 	}
-	return drums_hit;
+
+	return drums_hit;	
 }
 
-void highlight_drums(ArrayList drums_hit) {
+void highlight_drums(ArrayList drums_hit) {	
 	for (int i = 0; i<drums_hit.size(); i++) {
 		drums[drums_hit.get(i)].highlight = true;
 	}	
@@ -102,7 +141,7 @@ class Note {
 		exists = false;
 	}
 
-	void reset() {
+	void reset() {		
 		float seed = random(0,1);
 
 		if (seed < 0.25) {
@@ -156,16 +195,14 @@ class Drum {
 
 	void draw() {
 		if (highlight) {
-			strokeWeight(10);
+			strokeWeight(15);
 			stroke(red,green,blue);
 			highlight = false;
-		}
-		else {
-			noStroke();
 		}
 
 		fill(red,green,blue);
 		rect(x,y,width,height);
+		noStroke();
 	}
 }
 
